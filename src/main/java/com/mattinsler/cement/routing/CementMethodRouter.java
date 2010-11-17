@@ -3,6 +3,7 @@ package com.mattinsler.cement.routing;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.mattinsler.cement.CementRequestParameters;
+import com.mattinsler.cement.exception.CementNotFoundException;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -115,7 +116,7 @@ public class CementMethodRouter {
         }
     }
 
-    public CementExecutableMethod route(CementMethodType type, String path, CementRequestParameters parameters) {
+    public CementExecutableMethod route(CementMethodType type, String path, CementRequestParameters parameters) throws CementNotFoundException {
         String[] pathElements = path == null ? new String[0] : path.substring(1).split("/");
 
         CementExecutableParameter[] executableParameters = new CementExecutableParameter[16];
@@ -126,14 +127,12 @@ public class CementMethodRouter {
             if (child == null) {
                 child = pathNode.parameterChild;
                 if (child == null) {
-                    throw new RuntimeException("404");
+                    throw new CementNotFoundException();
                 }
                 executableParameters[child.parameter.index] = new CementBasicExecutableParameter(child.parameter, element);
             }
             pathNode = child;
         }
-
-        String format = parameters.remove("format");
 
         ParameterNode parameterNode = pathNode.parameterRoot;
         for (String parameterName : parameters.parameterNames()) {
@@ -148,6 +147,6 @@ public class CementMethodRouter {
             executableParameters[p.index] = new CementInjectedExecutableParameter(p, _injector);
         }
 
-        return new CementExecutableMethod(parameterNode.method, executableParameters, (format != null ? format : null));
+        return new CementExecutableMethod(parameterNode.method, executableParameters);
     }
 }

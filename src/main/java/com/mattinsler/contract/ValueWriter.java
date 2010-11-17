@@ -1,4 +1,4 @@
-package com.mattinsler.cement.contract;
+package com.mattinsler.contract;
 
 import java.io.IOException;
 

@@ -2,6 +2,7 @@ package com.mattinsler.cement.routing;
 
 import com.mattinsler.cement.exception.CementException;
 import com.mattinsler.cement.exception.CementUnexpectedException;
+import com.mattinsler.contract.IsContract;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -13,33 +14,31 @@ import java.lang.reflect.InvocationTargetException;
  * To change this template use File | Settings | File Templates.
  */
 public class CementExecutableMethod {
-    public final String format;
-    public final CementMethod method;
-    public final CementExecutableParameter[] executableParameters;
+    private final String _format;
+    private final CementMethod _method;
+    private final CementExecutableParameter[] _executableParameters;
 
-    public CementExecutableMethod(CementMethod method, CementExecutableParameter[] executableParameters, String format) {
-        this.method = method;
-        this.executableParameters = executableParameters;
+    public CementExecutableMethod(CementMethod method, CementExecutableParameter[] executableParameters) {
+        _method = method;
+        _executableParameters = executableParameters;
 
-        if (format != null && !"".equals(format)) {
-            this.format = format;
-        } else if (method.defaultResponseFormat != null && !"".equals(method.defaultResponseFormat)) {
-            this.format = method.defaultResponseFormat;
+        if (method.defaultResponseFormat != null && !"".equals(method.defaultResponseFormat)) {
+            _format = method.defaultResponseFormat;
         } else {
-            this.format = null;
+            _format = null;
         }
     }
 
     public Object execute(Object handler) {
         // executableParameters can have an extra few blank entries ...
-        Object[] arguments = new Object[this.method.parameters.size() + this.method.pathParameters.size() + this.method.injectableParameters.size()];
+        Object[] arguments = new Object[_method.parameters.size() + _method.pathParameters.size() + _method.injectableParameters.size()];
 
         for (int x = 0; x < arguments.length; ++x) {
-            arguments[x] = this.executableParameters[x].get();
+            arguments[x] = _executableParameters[x].get();
         }
 
         try {
-            return this.method.method.invoke(handler, arguments);
+            return _method.method.invoke(handler, arguments);
         } catch (IllegalAccessException e) {
             throw new CementUnexpectedException(e);
         } catch (InvocationTargetException e) {
@@ -50,5 +49,21 @@ public class CementExecutableMethod {
                 throw new CementUnexpectedException(e);
             }
         }
+    }
+
+    public boolean hasResponseFormat() {
+        return _format != null;
+    }
+
+    public String getResponseFormat() {
+        return _format;
+    }
+
+    public Class<? extends IsContract> getResponseContract() {
+        return _method.responseContractType;
+    }
+
+    public Class<? extends IsContract> getErrorContract() {
+        return _method.errorContractType;
     }
 }

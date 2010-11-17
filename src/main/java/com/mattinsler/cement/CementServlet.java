@@ -1,20 +1,24 @@
 package com.mattinsler.cement;
 
 import com.google.inject.Injector;
+import com.google.inject.Provider;
+import com.mattinsler.cement.contract.CementErrorContract;
 import com.mattinsler.cement.exception.CementException;
 import com.mattinsler.cement.exception.CementUnexpectedException;
 import com.mattinsler.cement.logging.CementLogger;
 import com.mattinsler.cement.routing.CementExecutableMethod;
 import com.mattinsler.cement.routing.CementMethodRouter;
 import com.mattinsler.cement.routing.CementMethodType;
+import com.mattinsler.contract.ContractSerializationService;
+import com.mattinsler.contract.IsContract;
+import com.mattinsler.contract.exception.UnknownFormatException;
+import com.mattinsler.contract.exception.UnknownSerializerException;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -28,63 +32,108 @@ public class CementServlet extends HttpServlet {
     private final Object _handler;
     private final CementLogger _logger;
     private final CementMethodRouter _router;
-    private final CementResponseFormatter _responseFormatter;
+    private final ContractSerializationService _serializationService;
     private final String _defaultResponseFormat;
 
-    public CementServlet(Injector injector, CementMethodRouter router, Object handler, CementLogger logger, CementResponseFormatter responseFormatter, String defaultResponseFormat) {
+    private final Provider<CementRequestParameters> _requestParametersProvider;
+
+    public CementServlet(Injector injector, CementMethodRouter router, Object handler, CementLogger logger, ContractSerializationService serializationService, String defaultResponseFormat, Provider<CementRequestParameters> requestParametersProvider) {
         _injector = injector;
         _router = router;
         _handler = handler;
         _logger = logger;
-        _responseFormatter = responseFormatter;
+        _serializationService = serializationService;
         _defaultResponseFormat = defaultResponseFormat;
+        _requestParametersProvider = requestParametersProvider;
     }
 
     private void execute(CementMethodType type, HttpServletRequest request, HttpServletResponse response) {
-        String format = _defaultResponseFormat;
-        try {
-            // when path can't be found, throw 404
-            CementRequestParameters parameters = _injector.getInstance(CementRequestParameters.class);
-            CementExecutableMethod executableMethod = _router.route(type, request.getPathInfo(), parameters);
+        execute(type, request, response, _requestParametersProvider.get());
+    }
 
-            if (executableMethod.format != null) {
-                format = executableMethod.format;
+    private void execute(CementMethodType type, HttpServletRequest request, HttpServletResponse response, CementRequestParameters parameters) {
+        String format = parameters.contains("format") ? parameters.get("format") : null;
+        CementExecutableMethod executableMethod = null;
+        try {
+            executableMethod = _router.route(type, request.getPathInfo(), parameters);
+
+            if (format == null && executableMethod.hasResponseFormat()) {
+                format = executableMethod.getResponseFormat();
             }
 
             Object result = executableMethod.execute(_handler);
-            respond(response, HttpServletResponse.SC_OK, result, executableMethod.method.responseFormatter, format);
+            respond(response, executableMethod, result, format);
         } catch (CementException e) {
             _logger.error(e);
-            respondException(response, e, format);
+            respondException(response, executableMethod, e, format);
         } catch (Throwable t) {
             _logger.error("An unexpected error occurred in processing a request", t);
             t.printStackTrace();
-            respondException(response, new CementUnexpectedException(t), format);
+            respondException(response, executableMethod, new CementUnexpectedException(t), format);
         }
     }
 
-    private void respondException(HttpServletResponse response, CementException exception, String format) {
-        respond(response, exception.getStatusCode(), exception, null, format);
+    private void respondException(HttpServletResponse response, CementExecutableMethod scope, CementException exception, String format) {
+        Class<? extends IsContract> contract;
+        if (scope != null && scope.getErrorContract() != null) {
+            contract = scope.getErrorContract();
+        } else {
+            contract = CementErrorContract.class;
+        }
+        writeResponse(response, exception.getStatusCode(), exception, contract, format);
     }
 
-    private void respond(HttpServletResponse response, int statusCode, Object value, CementResponseFormatter methodFormatter, String format) {
+    private void respond(HttpServletResponse response, CementExecutableMethod scope, Object responseValue, String format) {
+        writeResponse(response, HttpServletResponse.SC_OK, responseValue, scope.getResponseContract(), format);
+    }
+
+    private void writeError(HttpServletResponse response, UnknownFormatException e) {
         try {
-            String contentType;
-            if (value == null) {
-                response.setStatus(HttpServletResponse.SC_OK);
-            } else {
-                if (methodFormatter != null && methodFormatter.canFormat(format)) {
-                    contentType = methodFormatter.format(value, response.getWriter(), format);
-                } else if (_responseFormatter.canFormat(format)) {
-                    contentType = _responseFormatter.format(value, response.getWriter(), format);
-                } else {
-                    throw new RuntimeException("No Response Writer found for the specified format: " + format);
-                }
-                response.setContentType(contentType);
-                response.setStatus(statusCode);
-            }
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Unknown format: " + e.getFormat());
+        } catch (IOException f) {
+            f.printStackTrace();
+        }
+    }
+
+    private String formatClassName(Class<?> type) {
+        if (type.getPackage() == null) {
+            return type.getName();
+        }
+        return type.getName().substring(type.getPackage().getName().length() + 1);
+    }
+
+    private void writeError(HttpServletResponse response, UnknownSerializerException e) {
+        try {
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Unknown serializer: " + formatClassName(e.getValueType()) + " -> " + formatClassName(e.getContractType()));
+        } catch (IOException f) {
+            f.printStackTrace();
+        }
+    }
+
+    private void writeError(HttpServletResponse response, RuntimeException e) {
+        try {
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Unknown exception: " + e.getMessage());
+        } catch (IOException f) {
+            f.printStackTrace();
+        }
+    }
+
+    private void writeResponse(HttpServletResponse response, int status, Object responseValue, Class<? extends IsContract> responseContract, String format) {
+        if (format == null) {
+            format = _defaultResponseFormat;
+        }
+        try {
+            String contentType = _serializationService.serialize(response.getOutputStream(), responseContract, responseValue, format);
+            response.setStatus(status);
+            response.setContentType(contentType);
         } catch (IOException e) {
-            _logger.error("An unexpected error occurred while responding to a request", e);
+            e.printStackTrace();
+        } catch (UnknownFormatException e) {
+            writeError(response, e);
+        } catch (UnknownSerializerException e) {
+            writeError(response, e);
+        } catch (RuntimeException e) {
+            writeError(response, e);
             e.printStackTrace();
         }
     }

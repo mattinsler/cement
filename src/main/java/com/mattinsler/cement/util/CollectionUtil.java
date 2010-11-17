@@ -20,28 +20,12 @@ public final class CollectionUtil {
         return list;
     }
 
+    public static <T> List<T> collect(Iterable<T> iterable) {
+        return collect(iterable.iterator());
+    }
+
     public static <T> List<T> collect(T[] array) {
         return Arrays.asList(array);
-    }
-
-    public static <T, U> List<T> collect(Iterable<U> iterable, Function<T, U> transform) {
-        List<T> list = new ArrayList<T>();
-
-        for (U item : iterable) {
-            list.add(transform.execute(item));
-        }
-
-        return list;
-    }
-
-    public static <T, U> List<T> collect(U[] array, Function<T, U> transform) {
-        List<T> list = new ArrayList<T>();
-
-        for (U item : array) {
-            list.add(transform.execute(item));
-        }
-
-        return list;
     }
 
     public static <T> boolean contains(Iterable<T> iterable, T item) {

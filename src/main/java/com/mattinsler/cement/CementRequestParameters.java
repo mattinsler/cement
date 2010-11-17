@@ -1,8 +1,6 @@
 package com.mattinsler.cement;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -14,17 +12,18 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 public class CementRequestParameters {
-    private final Map<String, String> _parameters;
+    private final Map<String, String[]> _parameters;
+
+    private String nullOrFirstItem(String[] items) {
+        return items == null || items.length == 0 ? null : items[0];
+    }
 
     public CementRequestParameters(HttpServletRequest request) {
         this(request.getParameterMap());
     }
 
     public CementRequestParameters(Map<String, String[]> parameters) {
-        _parameters = new HashMap<String, String>();
-        for (Map.Entry<String, String[]> entry : parameters.entrySet()) {
-            _parameters.put(entry.getKey(), entry.getValue()[0]);
-        }
+        _parameters = parameters;
     }
 
     public int size() {
@@ -40,19 +39,7 @@ public class CementRequestParameters {
     }
 
     public String get(String key) {
-        return _parameters.get(key);
-    }
-
-    public String put(String key, String value) {
-        return _parameters.put(key, value);
-    }
-
-    public String remove(String key) {
-        return _parameters.remove(key);
-    }
-
-    public void clear() {
-        _parameters.clear();
+        return nullOrFirstItem(_parameters.get(key));
     }
 
     public Set<String> parameterNames() {

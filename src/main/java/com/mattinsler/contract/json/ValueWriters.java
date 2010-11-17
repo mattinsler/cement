@@ -1,6 +1,6 @@
-package com.mattinsler.cement.contract.json;
+package com.mattinsler.contract.json;
 
-import com.mattinsler.cement.contract.ValueWriter;
+import com.mattinsler.contract.ValueWriter;
 
 import java.io.IOException;
 

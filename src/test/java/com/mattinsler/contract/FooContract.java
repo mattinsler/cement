@@ -7,7 +7,7 @@ package com.mattinsler.contract;
  * Time: 1:39 AM
  * To change this template use File | Settings | File Templates.
  */
-public interface FooContract {
+public interface FooContract extends IsContract {
     String foo();
     Integer baz();
     BarContract bar();

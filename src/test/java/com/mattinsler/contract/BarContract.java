@@ -7,6 +7,6 @@ package com.mattinsler.contract;
  * Time: 1:39 AM
  * To change this template use File | Settings | File Templates.
  */
-public interface BarContract {
+public interface BarContract extends IsContract {
     boolean isCool();
 }

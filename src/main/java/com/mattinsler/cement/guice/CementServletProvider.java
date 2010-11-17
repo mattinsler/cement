@@ -5,10 +5,11 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Provider;
 import com.google.inject.name.Names;
-import com.mattinsler.cement.CementResponseFormatter;
+import com.mattinsler.cement.CementRequestParameters;
 import com.mattinsler.cement.CementServlet;
 import com.mattinsler.cement.logging.CementLogger;
 import com.mattinsler.cement.routing.CementMethodRouter;
+import com.mattinsler.contract.ContractSerializationService;
 
 /**
  * Created by IntelliJ IDEA.
@@ -39,8 +40,9 @@ class CementServletProvider implements Provider<CementServlet> {
                 _router,
                 cementHandler,
                 _injector.getInstance(CementLogger.class),
-                _injector.getInstance(CementResponseFormatter.class),
-                _injector.getInstance(Key.get(String.class, Names.named("DefaultResponseFormat")))
+                _injector.getInstance(ContractSerializationService.class),
+                _injector.getInstance(Key.get(String.class, Names.named("DefaultResponseFormat"))),
+                _injector.getProvider(CementRequestParameters.class)
         );
     }
 }

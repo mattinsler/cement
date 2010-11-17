@@ -1,5 +1,7 @@
 package com.mattinsler.cement.exception;
 
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * Created by IntelliJ IDEA.
  * User: mattinsler
@@ -11,7 +13,7 @@ public class CementException extends RuntimeException {
     private final int _statusCode;
 
     public CementException() {
-        this(0);
+        this(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
 
     public CementException(int statusCode) {

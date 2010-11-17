@@ -1,4 +1,4 @@
-package com.mattinsler.cement;
+package com.mattinsler.contract;
 
 /**
  * Created by IntelliJ IDEA.
@@ -7,5 +7,5 @@ package com.mattinsler.cement;
  * Time: 7:50 PM
  * To change this template use File | Settings | File Templates.
  */
-public interface IsDataContract {
+public interface IsContract {
 }

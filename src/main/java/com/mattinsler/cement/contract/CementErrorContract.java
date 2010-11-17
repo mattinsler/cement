@@ -1,6 +1,6 @@
 package com.mattinsler.cement.contract;
 
-import com.mattinsler.cement.IsDataContract;
+import com.mattinsler.contract.IsContract;
 
 /**
  * Created by IntelliJ IDEA.
@@ -9,5 +9,7 @@ import com.mattinsler.cement.IsDataContract;
  * Time: 7:52 PM
  * To change this template use File | Settings | File Templates.
  */
-public abstract class CementErrorContract implements IsDataContract {
+public interface CementErrorContract extends IsContract {
+    int statusCode();
+    String message();
 }

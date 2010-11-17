@@ -6,12 +6,12 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import com.google.inject.servlet.ServletModule;
 import com.mattinsler.cement.CementRequestParameters;
-import com.mattinsler.cement.CementResponseWriter;
 import com.mattinsler.cement.CementServlet;
-import com.mattinsler.cement.CementTextToStringResponseWriter;
+import com.mattinsler.cement.contract.mapper.CementErrorMapper;
 import com.mattinsler.cement.filter.CementRequestFilter;
 import com.mattinsler.cement.filter.CementRequestLogFilter;
 import com.mattinsler.cement.routing.CementMethodRouter;
+import com.mattinsler.contract.guice.ContractModule;
 
 /**
  * Created by IntelliJ IDEA.
@@ -50,13 +50,6 @@ public abstract class CementServletModule extends ServletModule {
         bindConstant().annotatedWith(Names.named("DefaultResponseFormat")).to(format);
     }
 
-    protected void addResponseWriters(Class<? extends CementResponseWriter>... writers) {
-        Multibinder<CementResponseWriter> multibinder = Multibinder.newSetBinder(binder(), CementResponseWriter.class);
-        for (Class<? extends CementResponseWriter> writer : writers) {
-            multibinder.addBinding().to(writer);
-        }
-    }
-
     @Override
     protected void configureServlets() {
         bind(CementRequestParameters.class).toProvider(CementRequestParametersProvider.class);
@@ -67,8 +60,12 @@ public abstract class CementServletModule extends ServletModule {
         filter("/*").through(CementRequestFilter.class);
         filter("/*").through(CementRequestLogFilter.class);
 
-        Multibinder.newSetBinder(binder(), CementResponseWriter.class)
-                .addBinding().to(CementTextToStringResponseWriter.class);
+        install(new ContractModule() {
+            @Override
+            protected void configure() {
+                bindMapper(CementErrorMapper.class);
+            }
+        });
 
         configureCement();
     }
