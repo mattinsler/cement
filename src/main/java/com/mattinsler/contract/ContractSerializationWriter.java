@@ -21,5 +21,5 @@ public interface ContractSerializationWriter {
     void beginElement(String name);
     void endElement();
 
-    <T> void writeValue(T value);
+    void writeValue(String value);
 }

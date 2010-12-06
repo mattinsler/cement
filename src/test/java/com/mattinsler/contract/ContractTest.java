@@ -1,13 +1,10 @@
 package com.mattinsler.contract;
 
-import com.google.inject.*;
-import com.google.inject.multibindings.Multibinder;
-import com.mattinsler.contract.guice.ContractMapperSerializerProvider;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.mattinsler.contract.guice.ContractModule;
 import com.mattinsler.contract.json.JsonSerializationWriter;
 import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,7 +14,7 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 public class ContractTest {
-    private static class FooMapper extends ContractMapper<FooContract, Object> {
+    private static class FooMapper extends ContractMapper<Object, FooContract> {
         @Override
         protected void mapContract(FooContract contract, Object value) {
             map(contract.foo()).to(new FieldMapper<Object, String>() {
@@ -38,7 +35,7 @@ public class ContractTest {
         }
     }
 
-    private static class BarMapper extends ContractMapper<BarContract, Object> {
+    private static class BarMapper extends ContractMapper<Object, BarContract> {
         @Override
         protected void mapContract(BarContract contract, Object value) {
             map(contract.isCool()).to(new FieldMapper<Object, Boolean>() {
@@ -51,24 +48,21 @@ public class ContractTest {
 
     @Test
     public void testSerializer() {
-        Injector injector = Guice.createInjector(new Module() {
-            public void configure(Binder binder) {
-                Multibinder<ContractFormatter> serializers = Multibinder.newSetBinder(binder, ContractFormatter.class);
-                serializers.addBinding().toProvider(new ContractMapperSerializerProvider(FooMapper.class));
-                serializers.addBinding().toProvider(new ContractMapperSerializerProvider(BarMapper.class));
+        Injector injector = Guice.createInjector(new ContractModule() {
+            @Override
+            protected void configureContracts() {
+                bindWriter(JsonSerializationWriter.class);
 
-                Multibinder<ContractSerializationWriter> writers = Multibinder.newSetBinder(binder, ContractSerializationWriter.class);
-                writers.addBinding().to(JsonSerializationWriter.class);
+                bindMapper(FooMapper.class);
+                bindMapper(BarMapper.class);
             }
         });
-
-        Set<ContractFormatter> formatters = injector.getInstance(new Key<Set<ContractFormatter>>() {});
-        Set<ContractSerializationWriter> writers = injector.getInstance(new Key<Set<ContractSerializationWriter>>() {});
 
         ContractSerializationService serializationService = injector.getInstance(ContractSerializationService.class);
 
         StringBuilder builder = new StringBuilder();
-        serializationService.serialize(builder, FooContract.class, Arrays.asList(new Object(), new Object()), "json");
+//        serializationService.serialize(builder, FooContract.class, Arrays.asList(new Object(), new Object()), "json");
+        serializationService.serialize(builder, FooContract.class, new Object(), "json");
         System.out.println(builder);
     }
 }

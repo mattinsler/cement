@@ -25,13 +25,13 @@ public class ContractSerializationService {
     private final Map<String, ContractSerializationWriter> _writers = new HashMap<String, ContractSerializationWriter>();
 
     @Inject
-    ContractSerializationService(Set<ContractFormatter> serializers, Set<ValueFormatter> formatters, Set<ContractSerializationWriter> writers) {
-        for (ContractFormatter formatter : serializers) {
-            _context.addSerializer(formatter);
+    ContractSerializationService(Set<ValueFormatter> formatters, Set<ContractFormatter> contractFormatters, Set<ContractSerializationWriter> writers) {
+        for (ValueFormatter formatter : formatters) {
+            _context.addFormatter(formatter);
         }
 
-        for (ValueFormatter formatter : formatters) {
-            _context.addFieldFormatter(formatter);
+        for (ContractFormatter formatter : contractFormatters) {
+            _context.addContractFormatter(formatter);
         }
 
         for (ContractSerializationWriter writer : writers) {
@@ -59,7 +59,7 @@ public class ContractSerializationService {
         }
 
         writer.setOutput(appendable);
-        _context.serializeContract(writer, contract, value);
+        _context.formatContract(writer, value, contract);
         if (appendable instanceof Flushable) {
             try {
                 ((Flushable)appendable).flush();

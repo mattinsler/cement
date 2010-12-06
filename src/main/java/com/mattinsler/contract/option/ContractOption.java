@@ -16,7 +16,11 @@ import java.lang.reflect.Method;
 public class ContractOption implements ValueMetadata.Option {
     private final Class<? extends IsContract> _contractType;
 
-    public ContractOption(Class<? extends IsContract> contractType) {
+    public ContractOption() {
+        _contractType = null;
+    }
+
+    private ContractOption(Class<? extends IsContract> contractType) {
         _contractType = contractType;
     }
 
@@ -24,6 +28,8 @@ public class ContractOption implements ValueMetadata.Option {
         Contract annotation = method.getAnnotation(Contract.class);
         if (annotation != null) {
             metadata.putOption(new ContractOption(annotation.value()));
+        } else if (IsContract.class.isAssignableFrom(method.getReturnType())) {
+            metadata.putOption(new ContractOption((Class<? extends IsContract>)method.getReturnType()));
         }
     }
 

@@ -62,7 +62,7 @@ public abstract class CementServletModule extends ServletModule {
 
         install(new ContractModule() {
             @Override
-            protected void configure() {
+            protected void configureContracts() {
                 bindMapper(CementErrorMapper.class);
             }
         });

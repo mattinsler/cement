@@ -1,5 +1,7 @@
 package com.mattinsler.contract;
 
+import com.mattinsler.contract.formatter.AbstractValueFormatter;
+
 /**
  * Created by IntelliJ IDEA.
  * User: mattinsler

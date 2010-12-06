@@ -8,6 +8,6 @@ package com.mattinsler.contract;
  * To change this template use File | Settings | File Templates.
  */
 public interface ValueFormatter<ValueType> {
-    Class<ValueType> getValueType();
+    Class<? extends ValueType>[] getValueTypes();
     void format(ContractSerializationWriter writer, ValueType value, ValueMetadata metadata, ContractSerializationContext context);
 }

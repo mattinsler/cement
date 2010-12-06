@@ -1,9 +1,11 @@
 package com.mattinsler.contract.guice;
 
+import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.mattinsler.contract.ContractMapper;
 import com.mattinsler.contract.ContractMapperFormatter;
 import com.mattinsler.contract.IsContract;
+import com.mattinsler.contract.MetadataService;
 import com.mattinsler.contract.exception.InitializationException;
 import net.sf.cglib.core.ReflectUtils;
 
@@ -21,6 +23,7 @@ public class ContractMapperSerializerProvider implements Provider<ContractMapper
     private final Class<? extends IsContract> _contractType;
     private final Class<? extends ContractMapper> _mapperType;
 
+    private MetadataService _metadataService;
     private ContractMapperFormatter _serializer;
 
     public ContractMapperSerializerProvider(Class<? extends ContractMapper> mapperType) {
@@ -42,12 +45,17 @@ public class ContractMapperSerializerProvider implements Provider<ContractMapper
         _contractType = contractType;
     }
 
+    @Inject
+    void injectDependencies(MetadataService metadataService) {
+        _metadataService = metadataService;
+    }
+
     public ContractMapperFormatter get() {
         if (_serializer == null) {
             try {
                 ContractMapper mapper = (ContractMapper)ReflectUtils.newInstance(_mapperType);
-                mapper.createMapping(_valueType, _contractType);
-                _serializer = new ContractMapperFormatter(_contractType, _valueType, mapper);
+                mapper.createMapping(_valueType, _contractType, _metadataService);
+                _serializer = new ContractMapperFormatter(_valueType, _contractType, mapper);
             } catch (Exception e) {
                 e.printStackTrace();
             }

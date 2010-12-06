@@ -11,7 +11,7 @@ import com.mattinsler.contract.ContractMapper;
  * Time: 12:42 AM
  * To change this template use File | Settings | File Templates.
  */
-public class CementErrorMapper extends ContractMapper<CementErrorContract, CementException> {
+public class CementErrorMapper extends ContractMapper<CementException, CementErrorContract> {
     protected void mapContract(CementErrorContract contract, CementException value) {
         map(contract.statusCode()).to(value.getStatusCode());
         map(contract.message()).to(value.getMessage());

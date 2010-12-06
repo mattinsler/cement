@@ -1,6 +1,5 @@
 package com.mattinsler.contract;
 
-import com.google.inject.Inject;
 import com.mattinsler.cement.util.Function;
 import com.mattinsler.cement.util.StringUtil;
 import com.mattinsler.contract.exception.InitializationException;
@@ -19,8 +18,7 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class ContractMapper<ValueType, ContractType extends IsContract> {
-    @Inject
-    Set<ValueMetadata.Option> _options;
+    private MetadataService _metadataService;
 
     private static class LastCalledMethodInterceptor implements MethodInterceptor {
         public Method lastMethod;
@@ -37,11 +35,9 @@ public abstract class ContractMapper<ValueType, ContractType extends IsContract>
     }
 
     private abstract class AbstractValueGetter implements ValueGetter {
-        private final ValueMetadata _metadata = new ValueMetadata();
+        private final ValueMetadata _metadata;
         protected AbstractValueGetter(Method contractMethod) {
-            for (ValueMetadata.Option option : _options) {
-                option.recognize(contractMethod, _metadata);
-            }
+            _metadata = _metadataService.createMetadata(contractMethod);
         }
         public ValueMetadata getMetadata() {
             return _metadata;
@@ -75,7 +71,6 @@ public abstract class ContractMapper<ValueType, ContractType extends IsContract>
     }
 
     private Map<Method, ValueGetter> _fieldToGetter = new HashMap<Method, ValueGetter>();
-    private Map<Method, ValueGetter> _contractFieldToGetter = new HashMap<Method, ValueGetter>();
     private LastCalledMethodInterceptor _lastValueMethod = new LastCalledMethodInterceptor();
     private LastCalledMethodInterceptor _lastContractMethod = new LastCalledMethodInterceptor();
 
@@ -88,7 +83,8 @@ public abstract class ContractMapper<ValueType, ContractType extends IsContract>
             Method contractMethod = _lastContractMethod.lastMethod;
             Method valueMethod = _lastValueMethod.lastMethod;
             if (IsContract.class.isAssignableFrom(contractMethod.getReturnType())) {
-                _contractFieldToGetter.put(contractMethod, new MethodValueGetter(contractMethod, valueMethod));
+//                _contractFieldToGetter.put(contractMethod, new MethodValueGetter(contractMethod, valueMethod));
+                _fieldToGetter.put(contractMethod, new MethodValueGetter(contractMethod, valueMethod));
             } else {
                 if (!contractMethod.getReturnType().equals(valueMethod.getReturnType())) {
                     throw new RuntimeException("The contract field and the value field must be the same types");
@@ -98,11 +94,7 @@ public abstract class ContractMapper<ValueType, ContractType extends IsContract>
         }
         public <T> void to(FieldMapper<ValueType, T> fieldMapper) {
             Method contractMethod = _lastContractMethod.lastMethod;
-            if (IsContract.class.isAssignableFrom(contractMethod.getReturnType())) {
-                _contractFieldToGetter.put(contractMethod, new FieldMapperValueGetter(contractMethod, fieldMapper));
-            } else {
-                _fieldToGetter.put(contractMethod, new FieldMapperValueGetter(contractMethod, fieldMapper));
-            }
+            _fieldToGetter.put(contractMethod, new FieldMapperValueGetter(contractMethod, fieldMapper));
         }
     }
 
@@ -112,11 +104,13 @@ public abstract class ContractMapper<ValueType, ContractType extends IsContract>
         return new Mapper<FieldType>();
     }
 
-    public void createMapping(Class<ValueType> valueType, Class<ContractType> contractType) {
+    public void createMapping(Class<ValueType> valueType, Class<ContractType> contractType, MetadataService metadataService) {
+        _metadataService = metadataService;
+
         Enhancer enhancer = new Enhancer();
         enhancer.setSuperclass(valueType);
         enhancer.setCallback(_lastValueMethod);
-        ValueType value = (ValueType) enhancer.create();
+        ValueType value = (ValueType)enhancer.create();
 
         enhancer = new Enhancer();
         enhancer.setInterfaces(new Class[]{contractType});
@@ -127,7 +121,6 @@ public abstract class ContractMapper<ValueType, ContractType extends IsContract>
 
         Set<Method> contractMethods = new HashSet<Method>(Arrays.asList(contractType.getDeclaredMethods()));
         contractMethods.removeAll(_fieldToGetter.keySet());
-        contractMethods.removeAll(_contractFieldToGetter.keySet());
 
         if (contractMethods.size() > 0) {
             throw new InitializationException("No mapping declared for " + StringUtil.join(contractMethods, ", ", new Function<String, Method>() {
@@ -140,9 +133,5 @@ public abstract class ContractMapper<ValueType, ContractType extends IsContract>
 
     public Map<Method, ValueGetter> getMapping() {
         return _fieldToGetter;
-    }
-
-    public Map<Method, ValueGetter> getContractMapping() {
-        return _contractFieldToGetter;
     }
 }

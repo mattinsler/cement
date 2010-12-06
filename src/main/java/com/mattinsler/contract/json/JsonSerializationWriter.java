@@ -1,7 +1,6 @@
 package com.mattinsler.contract.json;
 
 import com.mattinsler.contract.ContractSerializationWriter;
-import com.mattinsler.contract.ValueWriter;
 
 import java.io.IOException;
 import java.util.Stack;
@@ -17,7 +16,7 @@ public class JsonSerializationWriter implements ContractSerializationWriter {
     private static class Context {
         public boolean shouldAddComma;
         public String currentElementName;
-        public Object currentElementValue;
+        public String currentElementValue;
     }
 
     private final Stack<Context> _stack = new Stack<Context>();
@@ -87,17 +86,17 @@ public class JsonSerializationWriter implements ContractSerializationWriter {
         _stack.peek().currentElementName = name;
     }
 
-    public <T> void writeValue(T value) {
+    public void writeValue(String value) {
         _stack.peek().currentElementValue = value;
     }
 
-    private <T> void appendValue(T value) throws IOException {
-        ValueWriter<T> valueWriter = (ValueWriter<T>)_valueWriters.get(value.getClass());
-        if (valueWriter == null) {
-            valueWriter = (ValueWriter<T>)ValueWriters.QuotedValueWriter;
-        }
-        valueWriter.write(_output, value);
-    }
+//    private <T> void appendValue(T value) throws IOException {
+//        ValueWriter<T> valueWriter = (ValueWriter<T>)_valueWriters.get(value.getClass());
+//        if (valueWriter == null) {
+//            valueWriter = (ValueWriter<T>)ValueWriters.QuotedValueWriter;
+//        }
+//        valueWriter.write(_output, value);
+//    }
 
     public void endElement() {
         Context context = _stack.peek();
@@ -107,8 +106,7 @@ public class JsonSerializationWriter implements ContractSerializationWriter {
                     _output.append(",");
                 }
 
-                _output.append("\"").append(context.currentElementName).append("\"").append(":");
-                appendValue(context.currentElementValue);
+                _output.append("\"").append(context.currentElementName).append("\"").append(":").append(context.currentElementValue);
             } catch (IOException e) {
             }
 

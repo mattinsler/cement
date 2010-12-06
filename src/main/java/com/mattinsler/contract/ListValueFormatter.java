@@ -14,11 +14,11 @@ public class ListValueFormatter extends AbstractValueFormatter<List> {
         super(List.class);
     }
 
-    public void format(ContractSerializationWriter writer, List value, ContractSerializationContext context) {
+    public void format(ContractSerializationWriter writer, List value, ValueMetadata metadata, ContractSerializationContext context) {
         writer.beginList();
 
         for (Object item : value) {
-            context.formatValue(writer, item);
+            context.formatValue(writer, item, null);
         }
 
         writer.endList();

@@ -4,9 +4,7 @@ import com.mattinsler.contract.exception.UnknownFieldFormatterException;
 import com.mattinsler.contract.exception.UnknownSerializerException;
 import com.mattinsler.contract.option.ContractOption;
 
-import java.lang.reflect.Method;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -17,23 +15,22 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class ContractSerializationContext {
-    private final Map<Class<?>, ValueFormatter<?>> _fieldFormatters = new HashMap<Class<?>, ValueFormatter<?>>();
+    private final Map<Class<?>, ValueFormatter<?>> _formatters = new HashMap<Class<?>, ValueFormatter<?>>();
     private final Map<Class<?>, Map<Class<? extends IsContract>, ContractFormatter>> _contractFormatters = new HashMap<Class<?>, Map<Class<? extends IsContract>, ContractFormatter>>();
 
-    public <ValueType> void addFieldFormatter(ValueFormatter<ValueType> formatter) {
-        for (Method method : formatter.getClass().getMethods()) {
-            if ("format".equals(method.getName()) && method.getParameterTypes().length == 2 && ContractSerializationWriter.class.equals(method.getParameterTypes()[0])) {
-                _fieldFormatters.put(method.getParameterTypes()[1], formatter);
-                break;
-            }
+    public <ValueType> void addFormatter(ValueFormatter<ValueType> formatter) {
+        for (Class<?> valueType : formatter.getValueTypes()) {
+            _formatters.put(valueType, formatter);
         }
     }
 
-    public <ContractType extends IsContract, ValueType> void addSerializer(ContractFormatter<ContractType, ValueType> formatter) {
-        addSerializer(formatter.getContractType(), formatter.getValueType(), formatter);
+    public <T, C extends IsContract> void addContractFormatter(ContractFormatter<T, C> formatter) {
+        for (Class<?> valueType : formatter.getValueTypes()) {
+            addContractFormatter((Class<T>)valueType, formatter.getContractType(), formatter);
+        }
     }
 
-    public <ContractType extends IsContract, ValueType> void addSerializer(Class<ContractType> contractType, Class<ValueType> valueType, ContractFormatter<ContractType, ValueType> formatter) {
+    public <T, C extends IsContract> void addContractFormatter(Class<T> valueType, Class<C> contractType, ContractFormatter<T, C> formatter) {
         Map<Class<? extends IsContract>, ContractFormatter> contracts = _contractFormatters.get(valueType);
         if (contracts == null) {
             contracts = new HashMap<Class<? extends IsContract>, ContractFormatter>();
@@ -47,15 +44,19 @@ public class ContractSerializationContext {
 //        }
     }
 
-    public ContractFormatter getSerializer(Class<? extends IsContract> contractType, Class<?> valueType) {
-        Map<Class<? extends IsContract>, ContractFormatter> contracts = _serializers.get(valueType);
+    public <T> ValueFormatter<T> getFormatter(Class<T> type) {
+        return (ValueFormatter<T>)_formatters.get(type);
+    }
+
+    public <T, C extends IsContract> ContractFormatter<T, C> getContractFormatter(Class<T> valueType, Class<C> contractType) {
+        Map<Class<? extends IsContract>, ContractFormatter> contracts = _contractFormatters.get(valueType);
 
         boolean hasValueType = (contracts != null);
         if (!hasValueType) {
             Class<?> tempValueType = valueType;
             while (contracts == null && tempValueType != null) {
                 tempValueType = tempValueType.getSuperclass();
-                contracts = _serializers.get(tempValueType);
+                contracts = _contractFormatters.get(tempValueType);
             }
             if (contracts == null) {
                 return null;
@@ -64,26 +65,30 @@ public class ContractSerializationContext {
 
         ContractFormatter formatter = contracts.get(contractType);
         if (!hasValueType) {
-            addSerializer(contractType, valueType, formatter);
+            addContractFormatter(valueType, contractType, formatter);
         }
 
         return formatter;
     }
 
-    public <ContractType extends IsContract, ValueType> void formatContract(ContractSerializationWriter writer, Class<ContractType> contract, ValueType value) throws UnknownSerializerException {
-        ContractFormatter<ContractType> formatter = getSerializer(contract, value.getClass());
+    public <T, C extends IsContract> void formatContract(ContractSerializationWriter writer, T value, Class<C> contract) throws UnknownSerializerException {
+        formatContract(writer, (Class<T>)value.getClass(), contract, value);
+    }
+
+    public <T, C extends IsContract> void formatContract(ContractSerializationWriter writer, Class<T> valueType, Class<C> contract, T value) throws UnknownSerializerException {
+        ContractFormatter<T, C> formatter = getContractFormatter(valueType, contract);
         if (formatter == null) {
-            throw new UnknownSerializerException(value.getClass(), contract);
+            throw new UnknownSerializerException(valueType, contract);
         }
         formatter.format(writer, value, null, this);
     }
 
-    public <ValueType> void formatValue(ContractSerializationWriter writer, ValueType value, ValueMetadata metadata) {
+    public <T> void formatValue(ContractSerializationWriter writer, T value, ValueMetadata metadata) {
         ContractOption contractOption = metadata.getOption(ContractOption.class);
         if (contractOption != null) {
-            serialize(writer, contractOption.getContractType(), value);
+            formatContract(writer, value, contractOption.getContractType());
         }
-        ValueFormatter<ValueType> formatter = (ValueFormatter<ValueType>)_fieldFormatters.get(value.getClass());
+        ValueFormatter<T> formatter = (ValueFormatter<T>) _formatters.get(value.getClass());
         if (formatter == null) {
             throw new UnknownFieldFormatterException(value.getClass());
         }
