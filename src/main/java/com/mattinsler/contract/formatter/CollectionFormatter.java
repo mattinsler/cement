@@ -4,9 +4,7 @@ import com.mattinsler.contract.ContractSerializationContext;
 import com.mattinsler.contract.ContractSerializationWriter;
 import com.mattinsler.contract.ValueMetadata;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,13 +13,13 @@ import java.util.List;
  * Time: 9:24 PM
  * To change this template use File | Settings | File Templates.
  */
-public class ListFormatter extends AbstractValueFormatter<List> {
-    public ListFormatter() {
-        super(ArrayList.class, LinkedList.class);
+public class CollectionFormatter extends AbstractValueFormatter<Collection> {
+    public CollectionFormatter() {
+        super(Collection.class);
     }
 
     @Override
-    public void format(ContractSerializationWriter writer, List value, ValueMetadata metadata, ContractSerializationContext context) {
+    public void format(ContractSerializationWriter writer, Collection value, ValueMetadata metadata, ContractSerializationContext context) {
         writer.beginList();
 
         for (Object item : value) {

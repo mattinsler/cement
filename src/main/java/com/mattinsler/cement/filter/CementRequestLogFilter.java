@@ -22,24 +22,28 @@ public class CementRequestLogFilter implements Filter {
 
     @Inject
     CementRequestLogFilter(CementRequestFilter requestFilter, CementRequestLogWriter requestLogWriter) {
-        _requestFilter = requestFilter;
-        _requestLogWriter = requestLogWriter;
-    }
+       _requestFilter = requestFilter;
+       _requestLogWriter = requestLogWriter;
+   }
 
-    public void init(FilterConfig filterConfig) throws ServletException {
-    }
+   public void init(FilterConfig filterConfig) throws ServletException {
+   }
 
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
-        CementRequestInfo requestInfo = _requestFilter.getCurrentRequestInfo();
+   public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
+       CementRequestInfo requestInfo = _requestFilter.getCurrentRequestInfo();
 
-        _requestLogWriter.writeRequestLog((HttpServletRequest)request, requestInfo.identity, requestInfo.requestTime);
+       if (_requestLogWriter != null) {
+           _requestLogWriter.writeRequestLog((HttpServletRequest)request, requestInfo.identity, requestInfo.requestTime);
+       }
 
-        filterChain.doFilter(request, response);
+       filterChain.doFilter(request, response);
 
-        // save response?
-        _requestLogWriter.writeResponseTime((HttpServletRequest)request, requestInfo.identity, new Date());
-    }
+       // save response?
+       if (_requestLogWriter != null) {
+           _requestLogWriter.writeResponseTime((HttpServletRequest)request, requestInfo.identity, new Date());
+       }
+   }
 
-    public void destroy() {
-    }
-}
+   public void destroy() {
+   }
+ }

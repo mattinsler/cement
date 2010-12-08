@@ -14,6 +14,7 @@ import java.util.Stack;
  */
 public class JsonSerializationWriter implements ContractSerializationWriter {
     private static class Context {
+        public boolean isList;
         public boolean shouldAddComma;
         public String currentElementName;
         public String currentElementValue;
@@ -76,6 +77,7 @@ public class JsonSerializationWriter implements ContractSerializationWriter {
 
     public void beginList() {
         _begin("[");
+        _stack.peek().isList = true;
     }
 
     public void endList() {
@@ -87,7 +89,19 @@ public class JsonSerializationWriter implements ContractSerializationWriter {
     }
 
     public void writeValue(String value) {
-        _stack.peek().currentElementValue = value;
+        Context context = _stack.peek();
+        if (context.isList) {
+            try {
+                if (context.shouldAddComma) {
+                    _output.append(',');
+                }
+                _output.append(value);
+                context.shouldAddComma = true;
+            } catch (IOException e) {
+            }
+        } else {
+            context.currentElementValue = value;
+        }
     }
 
 //    private <T> void appendValue(T value) throws IOException {

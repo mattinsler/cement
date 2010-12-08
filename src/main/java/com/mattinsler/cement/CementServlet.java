@@ -123,7 +123,12 @@ public class CementServlet extends HttpServlet {
             format = _defaultResponseFormat;
         }
         try {
-            String contentType = _serializationService.serialize(response.getOutputStream(), responseContract, responseValue, format);
+            String contentType;
+            if (responseContract == null) {
+                contentType = _serializationService.serialize(response.getOutputStream(), responseValue, format);
+            } else {
+                contentType = _serializationService.serialize(response.getOutputStream(), responseContract, responseValue, format);
+            }
             response.setStatus(status);
             response.setContentType(contentType);
         } catch (IOException e) {

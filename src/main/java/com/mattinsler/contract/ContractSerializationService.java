@@ -87,4 +87,30 @@ public class ContractSerializationService {
         }
         return contentType;
     }
+
+    public <T> String serialize(Appendable appendable, T value, String format) throws UnknownFormatException, UnknownSerializerException {
+        ContractSerializationWriter writer = _writers.get(format);
+        if (writer == null) {
+            throw new UnknownFormatException(format);
+        }
+
+        writer.setOutput(appendable);
+        _context.formatValue(writer, value, new ValueMetadata());
+        if (appendable instanceof Flushable) {
+            try {
+                ((Flushable)appendable).flush();
+            } catch (IOException e) {
+            }
+        }
+        return writer.getContentType();
+    }
+
+    public <T> String serialize(OutputStream stream, T value, String format) throws UnknownFormatException, UnknownSerializerException {
+        String contentType = serialize(new OutputStreamWriter(stream), value, format);
+        try {
+            stream.flush();
+        } catch (IOException e) {
+        }
+        return contentType;
+    }
 }

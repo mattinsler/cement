@@ -4,8 +4,8 @@ import com.mattinsler.contract.exception.UnknownFieldFormatterException;
 import com.mattinsler.contract.exception.UnknownSerializerException;
 import com.mattinsler.contract.option.ContractOption;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.lang.reflect.Method;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -45,10 +45,60 @@ public class ContractSerializationContext {
     }
 
     public <T> ValueFormatter<T> getFormatter(Class<T> type) {
-        return (ValueFormatter<T>)_formatters.get(type);
+        ValueFormatter<T> formatter = (ValueFormatter<T>)_formatters.get(type);
+
+        if (formatter == null) {
+            Stack<Class<?>> stack = new Stack<Class<?>>();
+            stack.push(type);
+
+            Class<?> newType = null;
+            while (!stack.isEmpty()) {
+                newType = stack.pop();
+                formatter = (ValueFormatter<T>)_formatters.get(newType);
+                if (formatter != null) {
+                    _formatters.put(newType, formatter);
+                    break;
+                }
+                if (newType.getSuperclass() != null) {
+                    stack.add(newType.getSuperclass());
+                }
+                stack.addAll(Arrays.asList(newType.getInterfaces()));
+            }
+        }
+
+        return formatter;
+    }
+
+    private static class ImplContractFormatter<C extends IsContract, T extends C> extends AbstractContractFormatter<C, C> {
+        public ImplContractFormatter(Class<C> contract) {
+            super(contract, contract);
+        }
+
+        @Override
+        public void format(ContractSerializationWriter writer, C value, ValueMetadata metadata, ContractSerializationContext context) {
+            writer.begin();
+
+            for (Method method : value.getClass().getDeclaredMethods()) {
+                writer.beginElement(method.getName());
+                try {
+                    Object fieldValue = method.invoke(value);
+                    if (fieldValue != null) {
+                        context.formatValue(writer, fieldValue, new ValueMetadata());
+                    }
+                } catch (Exception e) {
+                }
+                writer.endElement();
+            }
+
+            writer.end();
+        }
     }
 
     public <T, C extends IsContract> ContractFormatter<T, C> getContractFormatter(Class<T> valueType, Class<C> contractType) {
+        if (contractType.isAssignableFrom(valueType)) {
+            return new ImplContractFormatter(contractType);
+        }
+
         Map<Class<? extends IsContract>, ContractFormatter> contracts = _contractFormatters.get(valueType);
 
         boolean hasValueType = (contracts != null);
@@ -88,7 +138,7 @@ public class ContractSerializationContext {
         if (contractOption != null) {
             formatContract(writer, value, contractOption.getContractType());
         }
-        ValueFormatter<T> formatter = (ValueFormatter<T>) _formatters.get(value.getClass());
+        ValueFormatter<T> formatter = (ValueFormatter<T>) getFormatter(value.getClass());
         if (formatter == null) {
             throw new UnknownFieldFormatterException(value.getClass());
         }

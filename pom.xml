@@ -33,23 +33,32 @@
             <name>JBoss</name>
             <url>http://repository.jboss.org/maven2</url>
         </repository>
+        <repository>
+            <id>mattinsler-snapshots</id>
+            <url>http://mattinsler.github.com/repository/snapshots</url>
+        </repository>
     </repositories>
 
     <dependencies>
-        <dependency>
-            <groupId>com.google.code.guice</groupId>
-            <artifactId>guice-servlet</artifactId>
-            <version>2.0</version>
-        </dependency>
         <dependency>
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
             <version>2.0</version>
         </dependency>
         <dependency>
+            <groupId>com.google.code.guice</groupId>
+            <artifactId>guice-servlet</artifactId>
+            <version>2.0</version>
+        </dependency>
+        <dependency>
             <groupId>com.google.inject.extensions</groupId>
             <artifactId>guice-multibindings</artifactId>
             <version>2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mattinsler</groupId>
+            <artifactId>guiceymongo</artifactId>
+            <version>0.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>

@@ -6,6 +6,10 @@ import com.mattinsler.contract.guice.ContractModule;
 import com.mattinsler.contract.json.JsonSerializationWriter;
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by IntelliJ IDEA.
  * User: mattinsler
@@ -62,7 +66,15 @@ public class ContractTest {
 
         StringBuilder builder = new StringBuilder();
 //        serializationService.serialize(builder, FooContract.class, Arrays.asList(new Object(), new Object()), "json");
-        serializationService.serialize(builder, FooContract.class, new Object(), "json");
+//        serializationService.serialize(builder, FooContract.class, new Object(), "json");
+//        serializationService.serialize(builder, Arrays.asList("Hello", "World"), "json");
+        Map map = new HashMap();
+        map.put("Hello", "world");
+        map.put("foo", 5);
+        Map submap = new HashMap();
+        submap.put("yo", "buddy");
+        map.put("bar", submap);
+        serializationService.serialize(builder, map, "json");
         System.out.println(builder);
     }
 }

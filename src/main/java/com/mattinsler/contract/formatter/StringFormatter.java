@@ -17,6 +17,6 @@ public class StringFormatter extends AbstractValueFormatter<String> {
     }
 
     public void format(ContractSerializationWriter writer, String value, ValueMetadata metadata, ContractSerializationContext context) {
-        writer.writeValue("'" + value + "'");
+        writer.writeValue('"' + value + '"');
     }
 }

@@ -1,5 +1,7 @@
 package com.mattinsler.contract;
 
+import com.mattinsler.contract.formatter.AbstractValueFormatter;
+
 import java.util.List;
 
 /**
@@ -9,7 +11,8 @@ import java.util.List;
  * Time: 1:20 AM
  * To change this template use File | Settings | File Templates.
  */
-public class ListValueFormatter extends AbstractValueFormatter<List> {
+public class ListValueFormatter extends AbstractValueFormatter<List>
+{
     public ListValueFormatter() {
         super(List.class);
     }
