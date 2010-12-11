@@ -84,7 +84,12 @@ public class CementServlet extends HttpServlet {
     }
 
     private void respond(HttpServletResponse response, CementExecutableMethod scope, Object responseValue, String format) {
-        writeResponse(response, HttpServletResponse.SC_OK, responseValue, scope.getResponseContract(), format);
+        format = format == null ? _defaultResponseFormat : format;
+        if (scope.hasFormatSerializer(format)) {
+            writeResponse(response, HttpServletResponse.SC_OK, responseValue, scope.getFormatSerializer(format));
+        } else {
+            writeResponse(response, HttpServletResponse.SC_OK, responseValue, scope.getResponseContract(), format);
+        }
     }
 
     private void writeError(HttpServletResponse response, UnknownFormatException e) {
@@ -119,9 +124,6 @@ public class CementServlet extends HttpServlet {
     }
 
     private void writeResponse(HttpServletResponse response, int status, Object responseValue, Class<? extends IsContract> responseContract, String format) {
-        if (format == null) {
-            format = _defaultResponseFormat;
-        }
         try {
             String contentType;
             if (responseContract == null) {
@@ -129,6 +131,23 @@ public class CementServlet extends HttpServlet {
             } else {
                 contentType = _serializationService.serialize(response.getOutputStream(), responseContract, responseValue, format);
             }
+            response.setStatus(status);
+            response.setContentType(contentType);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (UnknownFormatException e) {
+            writeError(response, e);
+        } catch (UnknownSerializerException e) {
+            writeError(response, e);
+        } catch (RuntimeException e) {
+            writeError(response, e);
+            e.printStackTrace();
+        }
+    }
+
+    private void writeResponse(HttpServletResponse response, int status, Object responseValue, CementFormatSerializer serializer) {
+        try {
+            String contentType = serializer.serialize(response.getOutputStream(), responseValue);
             response.setStatus(status);
             response.setContentType(contentType);
         } catch (IOException e) {

@@ -1,4 +1,8 @@
-package com.mattinsler.contract;
+package com.mattinsler.contract.formatter;
+
+import com.mattinsler.contract.ContractSerializationContext;
+import com.mattinsler.contract.ContractSerializationWriter;
+import com.mattinsler.contract.ValueMetadata;
 
 /**
  * Created by IntelliJ IDEA.

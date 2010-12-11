@@ -1,10 +1,13 @@
 package com.mattinsler.cement.routing;
 
+import com.mattinsler.cement.CementFormatSerializer;
 import com.mattinsler.cement.exception.CementException;
 import com.mattinsler.cement.exception.CementUnexpectedException;
 import com.mattinsler.contract.IsContract;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -65,5 +68,13 @@ public class CementExecutableMethod {
 
     public Class<? extends IsContract> getErrorContract() {
         return _method.errorContractType;
+    }
+
+    public boolean hasFormatSerializer(String format) {
+        return _method.formatSerializers.containsKey(format);
+    }
+
+    public CementFormatSerializer getFormatSerializer(String format) {
+        return _method.formatSerializers.get(format);
     }
 }

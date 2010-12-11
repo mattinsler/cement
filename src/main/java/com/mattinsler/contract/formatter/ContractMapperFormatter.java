@@ -1,5 +1,7 @@
-package com.mattinsler.contract;
+package com.mattinsler.contract.formatter;
 
+import com.mattinsler.contract.*;
+import com.mattinsler.contract.formatter.AbstractContractFormatter;
 import com.mattinsler.contract.option.ContractOption;
 
 import java.lang.reflect.Method;

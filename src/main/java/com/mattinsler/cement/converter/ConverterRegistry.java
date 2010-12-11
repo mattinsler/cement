@@ -34,6 +34,15 @@ public class ConverterRegistry {
     }
 
     public <T> Converter<T> getConverter(Class<?> type) {
-        return (Converter<T>)_converters.get(type);
+        Converter<T> converter = (Converter<T>)_converters.get(type);
+        if (converter == null && Enum.class.isAssignableFrom(type)) {
+            try {
+                converter = new EnumConverter(type);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            _converters.put(type, converter);
+        }
+        return converter;
     }
 }

@@ -4,6 +4,8 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.mattinsler.cement.CementRequestParameters;
 import com.mattinsler.cement.exception.CementNotFoundException;
+import com.mattinsler.cement.util.CollectionUtil;
+import com.mattinsler.cement.util.Function;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -136,10 +138,18 @@ public class CementMethodRouter {
 
         ParameterNode parameterNode = pathNode.parameterRoot;
         for (String parameterName : parameters.parameterNames()) {
-            parameterNode = parameterNode.children.get(parameterName);
-            if (parameterNode == null) {
+            ParameterNode nextParameterNode = parameterNode.children.get(parameterName);
+            if (nextParameterNode == null) {
+                if (parameterNode.children.isEmpty() && CollectionUtil.contains(parameterNode.method.injectableParameters, new Function<Boolean, CementParameter<?>>() {
+                    public Boolean execute(CementParameter<?> argument) {
+                        return CementRequestParameters.class.equals(argument.type);
+                    }
+                })) {
+                    break;
+                }
                 throw new RuntimeException("No matching method because of parameters");
             }
+            parameterNode = nextParameterNode;
             executableParameters[parameterNode.parameter.index] = new CementBasicExecutableParameter(parameterNode.parameter, parameters.get(parameterName));
         }
 

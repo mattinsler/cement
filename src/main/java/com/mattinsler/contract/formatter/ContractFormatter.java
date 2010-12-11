@@ -1,4 +1,6 @@
-package com.mattinsler.contract;
+package com.mattinsler.contract.formatter;
+
+import com.mattinsler.contract.IsContract;
 
 /**
  * Created by IntelliJ IDEA.

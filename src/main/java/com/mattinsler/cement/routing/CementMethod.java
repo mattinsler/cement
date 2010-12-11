@@ -1,6 +1,7 @@
 package com.mattinsler.cement.routing;
 
 import com.google.inject.Injector;
+import com.mattinsler.cement.CementFormatSerializer;
 import com.mattinsler.cement.annotation.*;
 import com.mattinsler.cement.util.CollectionUtil;
 import com.mattinsler.cement.util.Function;
@@ -34,6 +35,7 @@ public class CementMethod {
     public String defaultResponseFormat;
     public Class<? extends IsContract> responseContractType;
     public Class<? extends IsContract> errorContractType;
+    public Map<String, CementFormatSerializer> formatSerializers;
 
     public Map<String, CementParameter<?>> parameters;
 
@@ -105,6 +107,7 @@ public class CementMethod {
 
         Class<? extends IsContract> responseContractType = null;
         Class<? extends IsContract> errorContractType = null;
+        Map<String, CementFormatSerializer> formatSerializers = new HashMap<String, CementFormatSerializer>();
         Map<String, CementParameter<?>> parameters = new HashMap<String, CementParameter<?>>();
         List<CementParameter<?>> injectableParameters = new ArrayList<CementParameter<?>>();
 
@@ -126,6 +129,11 @@ public class CementMethod {
                 }
                 pathTokens.add(token);
             }
+        }
+
+        Serializer serializer = classMethod.getAnnotation(Serializer.class);
+        if (serializer != null) {
+            formatSerializers.put(serializer.format(), injector.getInstance(serializer.serializer()));
         }
 
         Class<?>[] parameterTypes = classMethod.getParameterTypes();
@@ -161,6 +169,7 @@ public class CementMethod {
             method.type = entry.getKey();
             method.defaultResponseFormat = (String)entry.getValue().get("defaultFormat");
             method.responseContractType = responseContractType;
+            method.formatSerializers = formatSerializers;
             method.errorContractType = errorContractType;
             method.parameters = parameters;
             method.injectableParameters = injectableParameters;

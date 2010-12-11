@@ -3,7 +3,7 @@ package com.mattinsler.contract.guice;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.mattinsler.contract.ContractMapper;
-import com.mattinsler.contract.ContractMapperFormatter;
+import com.mattinsler.contract.formatter.ContractMapperFormatter;
 import com.mattinsler.contract.IsContract;
 import com.mattinsler.contract.MetadataService;
 import com.mattinsler.contract.exception.InitializationException;

@@ -51,6 +51,7 @@ public abstract class ContractModule implements Module {
         });
 
         registerFormatter(BooleanFormatter.class);
+        registerFormatter(DoubleFormatter.class);
         registerFormatter(CollectionFormatter.class);
         registerFormatter(IntegerFormatter.class);
         registerFormatter(MapFormatter.class);

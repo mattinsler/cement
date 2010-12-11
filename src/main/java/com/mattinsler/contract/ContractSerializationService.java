@@ -4,6 +4,8 @@ import com.google.inject.Inject;
 import com.mattinsler.contract.exception.DuplicateWriterException;
 import com.mattinsler.contract.exception.UnknownFormatException;
 import com.mattinsler.contract.exception.UnknownSerializerException;
+import com.mattinsler.contract.formatter.ContractFormatter;
+import com.mattinsler.contract.formatter.ValueFormatter;
 
 import java.io.Flushable;
 import java.io.IOException;

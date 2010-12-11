@@ -2,6 +2,9 @@ package com.mattinsler.contract;
 
 import com.mattinsler.contract.exception.UnknownFieldFormatterException;
 import com.mattinsler.contract.exception.UnknownSerializerException;
+import com.mattinsler.contract.formatter.AbstractContractFormatter;
+import com.mattinsler.contract.formatter.ContractFormatter;
+import com.mattinsler.contract.formatter.ValueFormatter;
 import com.mattinsler.contract.option.ContractOption;
 
 import java.lang.reflect.Method;
@@ -78,7 +81,7 @@ public class ContractSerializationContext {
         public void format(ContractSerializationWriter writer, C value, ValueMetadata metadata, ContractSerializationContext context) {
             writer.begin();
 
-            for (Method method : value.getClass().getDeclaredMethods()) {
+            for (Method method : getContractType().getDeclaredMethods()) {
                 writer.beginElement(method.getName());
                 try {
                     Object fieldValue = method.invoke(value);
@@ -86,6 +89,7 @@ public class ContractSerializationContext {
                         context.formatValue(writer, fieldValue, new ValueMetadata());
                     }
                 } catch (Exception e) {
+                    e.printStackTrace();
                 }
                 writer.endElement();
             }
@@ -134,6 +138,23 @@ public class ContractSerializationContext {
     }
 
     public <T> void formatValue(ContractSerializationWriter writer, T value, ValueMetadata metadata) {
+        if (IsContract.class.isAssignableFrom(value.getClass())) {
+            Class<?> type = value.getClass();
+            Stack<Class<?>> stack = new Stack<Class<?>>();
+            stack.push(type);
+            while (!stack.isEmpty()) {
+                type = stack.pop();
+                if (Arrays.asList(type.getInterfaces()).contains(IsContract.class)) {
+                    break;
+                }
+                stack.add(type.getSuperclass());
+                stack.addAll(Arrays.asList(type.getInterfaces()));
+            }
+
+            new ImplContractFormatter(type).format(writer, (IsContract)value, new ValueMetadata(), this);
+            return;
+        }
+
         ContractOption contractOption = metadata.getOption(ContractOption.class);
         if (contractOption != null) {
             formatContract(writer, value, contractOption.getContractType());

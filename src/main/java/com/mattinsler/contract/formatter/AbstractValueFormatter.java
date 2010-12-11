@@ -1,7 +1,5 @@
 package com.mattinsler.contract.formatter;
 
-import com.mattinsler.contract.ValueFormatter;
-
 /**
  * Created by IntelliJ IDEA.
  * User: mattinsler
