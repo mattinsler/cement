@@ -38,8 +38,16 @@ public class CementRequestParameters {
         return _parameters.containsKey(key);
     }
 
+    public boolean containsArray(String key) {
+        return _parameters.containsKey(key + "[]");
+    }
+
     public String get(String key) {
         return nullOrFirstItem(_parameters.get(key));
+    }
+
+    public String[] getArray(String key) {
+        return _parameters.get(key + "[]");
     }
 
     public Set<String> parameterNames() {
