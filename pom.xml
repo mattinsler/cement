@@ -73,8 +73,8 @@
             <url>http://repository.jboss.org/maven2</url>
         </repository>
         <repository>
-            <id>mattinsler-snapshots</id>
-            <url>http://mattinsler.github.com/repository/snapshots</url>
+            <id>mattinsler-releases</id>
+            <url>http://mattinsler.github.com/repository/releases</url>
         </repository>
     </repositories>
 
@@ -102,7 +102,7 @@
         <dependency>
             <groupId>com.mattinsler</groupId>
             <artifactId>guiceymongo</artifactId>
-            <version>0.2-SNAPSHOT</version>
+            <version>0.2</version>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
