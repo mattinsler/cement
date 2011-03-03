@@ -11,38 +11,39 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class ConverterRegistry {
-    private static ConverterRegistry _instance;
-    public static synchronized ConverterRegistry get() {
-        if (_instance == null) {
-            _instance = new ConverterRegistry();
-        }
-        return _instance;
-    }
+  private static ConverterRegistry _instance;
 
-    private Map<Class<?>, Converter<?>> _converters = new HashMap<Class<?>, Converter<?>>();
-
-    private ConverterRegistry() {
-        register(new IntegerConverter());
-        register(new LongConverter());
-        register(new StringConverter());
+  public static synchronized ConverterRegistry get() {
+    if (_instance == null) {
+      _instance = new ConverterRegistry();
     }
+    return _instance;
+  }
 
-    public <T> void register(Converter<T> converter) {
-        for (Class<?> type : converter.getSupportedTypes()) {
-            _converters.put(type, converter);
-        }
-    }
+  private Map<Class<?>, Converter<?>> _converters = new HashMap<Class<?>, Converter<?>>();
 
-    public <T> Converter<T> getConverter(Class<?> type) {
-        Converter<T> converter = (Converter<T>)_converters.get(type);
-        if (converter == null && Enum.class.isAssignableFrom(type)) {
-            try {
-                converter = new EnumConverter(type);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            _converters.put(type, converter);
-        }
-        return converter;
+  private ConverterRegistry() {
+    register(new IntegerConverter());
+    register(new LongConverter());
+    register(new StringConverter());
+  }
+
+  public <T> void register(Converter<T> converter) {
+    for (Class<?> type : converter.getSupportedTypes()) {
+      _converters.put(type, converter);
     }
+  }
+
+  public <T> Converter<T> getConverter(Class<?> type) {
+    Converter<T> converter = (Converter<T>) _converters.get(type);
+    if (converter == null && Enum.class.isAssignableFrom(type)) {
+      try {
+        converter = new EnumConverter(type);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+      _converters.put(type, converter);
+    }
+    return converter;
+  }
 }

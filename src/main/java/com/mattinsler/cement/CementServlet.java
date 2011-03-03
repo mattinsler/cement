@@ -52,7 +52,7 @@ public class CementServlet extends HttpServlet {
     }
 
     private void execute(CementMethodType type, HttpServletRequest request, HttpServletResponse response, CementRequestParameters parameters) {
-        String format = parameters.contains("format") ? parameters.get("format") : null;
+        String format = parameters.getAndRemove("format");
         CementExecutableMethod executableMethod = null;
         try {
             executableMethod = _router.route(type, request.getPathInfo(), parameters);
